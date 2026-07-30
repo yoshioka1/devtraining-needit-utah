@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sys_ws_operation">
+    <sys_ws_operation action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <consumes>application/json</consumes>
+        <consumes_customized>false</consumes_customized>
+        <default_operation_uri>/api/x_58872_needit/needit_api/nigetinfo/{user_name}</default_operation_uri>
+        <enforce_acl/>
+        <http_method>GET</http_method>
+        <name>ni_getinfo</name>
+        <operation_script><![CDATA[(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+
+    // implement resource here
+
+	// URLのパスパラメーターから user_name を取得
+    var requestUser = request.pathParams.user_name;
+
+    // URLのクエリパラメーターから ni_query を取得
+    var requestNIQuery = request.queryParams.ni_query;
+
+    // user_name をもとに sys_user テーブルからユーザーレコードを取得
+    var requestUserName = new GlideRecord('sys_user');
+    requestUserName.get('user_name', requestUser);
+
+    // NeedIt テーブルのアクティブなレコード数を集計（u_request_type でグループ化）
+    var userNICount = new GlideAggregate('x_58872_needit_needit');
+    userNICount.addAggregate('COUNT');
+    userNICount.addQuery('u_requested_for', requestUserName.sys_id);
+    userNICount.addEncodedQuery(requestNIQuery);
+    userNICount.groupBy('u_request_type');
+    userNICount.query();
+
+    var needitRecs = 0;
+    var niUserRecs = [];
+    var needitRecsCount = 0;
+
+    while (userNICount.next()) {
+        needitRecs = userNICount.getAggregate('COUNT');
+        var reqType = userNICount.u_request_type.getDisplayValue();
+        niUserRecs.push({"requestType": reqType, "count": needitRecs});
+        needitRecsCount = parseInt(needitRecsCount) + parseInt(needitRecs);
+    }
+
+    // 返答用の body オブジェクトを作成
+    var body = {};
+    body.totalUserNIRecs = needitRecsCount;
+    body.catCounts = niUserRecs;
+    body.user = {
+        "User name": requestUserName.user_name,
+        "User ID": requestUserName.sys_id
+    };
+
+    // レスポンスにセット
+    response.setBody(body);
+
+})(request, response);]]></operation_script>
+        <operation_uri>/api/x_58872_needit/v1/needit_api/nigetinfo/{user_name}</operation_uri>
+        <produces>application/json,application/xml,text/xml</produces>
+        <produces_customized>false</produces_customized>
+        <relative_path>/nigetinfo/{user_name}</relative_path>
+        <request_example/>
+        <requires_acl_authorization>true</requires_acl_authorization>
+        <requires_authentication>true</requires_authentication>
+        <requires_snc_internal_role>true</requires_snc_internal_role>
+        <short_description>Find the active NeedIt records for a user. Group by What needed.</short_description>
+        <support_trailing_slash>false</support_trailing_slash>
+        <sys_class_name>sys_ws_operation</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-30 02:12:47</sys_created_on>
+        <sys_id>10daf54f73120b10e680fd145ab8b7c0</sys_id>
+        <sys_mod_count>3</sys_mod_count>
+        <sys_name>ni_getinfo</sys_name>
+        <sys_package display_value="NeedIt" source="x_58872_needit">6ead8e780f603200cd674f8ce1050ed1</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="NeedIt">6ead8e780f603200cd674f8ce1050ed1</sys_scope>
+        <sys_update_name>sys_ws_operation_10daf54f73120b10e680fd145ab8b7c0</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-30 04:12:35</sys_updated_on>
+        <web_service_definition display_value="NeedIt API">fd9b290b73120b10e680fd145ab8b76a</web_service_definition>
+        <web_service_version display_value="v1">eb661ecf73560b10e680fd145ab8b70c</web_service_version>
+    </sys_ws_operation>
+    <sys_es_latest_script action="INSERT_OR_UPDATE">
+        <id>10daf54f73120b10e680fd145ab8b7c0</id>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2026-07-30 02:12:47</sys_created_on>
+        <sys_id>f80b3dc773920b10e680fd145ab8b776</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2026-07-30 02:12:47</sys_updated_on>
+        <table>sys_ws_operation</table>
+        <use_es_latest>true</use_es_latest>
+    </sys_es_latest_script>
+</record_update>
